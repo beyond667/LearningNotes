@@ -7,3 +7,14 @@
 * 在SystemServer中会创建一个socket客户端，后续AMS（ActivityManagerService）会通过此客户端和zygote通信
 * ServerThread的run方法中开启了AMS,还孵化新进程ServiceManager,加载注册了一溜的服务,最后一句话进入loop 死循环
 * run方法的SystemReady调用resumeTopActivityLocked打开锁屏界面
+https://www.jianshu.com/p/657336b545bd
+https://www.jianshu.com/p/e219c11d1620
+https://www.jianshu.com/p/1adfd446e4fa
+
+标号1-n的n个人首尾相接，1到3报数，报到3的退出，求最后一个人的标号
+
+private int getLastThree(int n){
+
+	
+	
+}

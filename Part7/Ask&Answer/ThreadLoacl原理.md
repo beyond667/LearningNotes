@@ -1,0 +1,7 @@
+ThreadLocal主要解决并发场景下数据共享的问题，每个线程都有一份独立的变量副本，该副本只能被当前线程访问修改。  
+具体实现原理是，我们通过threadlocal.get/set方法往当前线程存取数据，实际上是调用了它的静态内部类ThreadLocalMap的get/set方法，所以threadLocal可以理解成“工具类”，对外提供get/set方法  
+ThreadLocalMap内部有个Entry数组，Entry是个静态的弱引用类，把threadlocal作为key，Object作为value，因为一个线程可以有多个本地线程变量，所以这里用了数组保存  
+ThreadLocalMap.set的时候会把传过来的值放到entry中，并把当前线程的变量Thread.threadlocals指向ThreadLocalMap,这样当前线程的线程局部变量就保存好了  
+这里要注意的是ThreadLocal虽然使用了弱引用作为key，但是还是可能会内存泄漏的，  
+因为value是强引用的，只有当前线程销毁时value才会释放，java也对get/set Entry的时候判断，如果key为null，会把value设为null,但是如果没有调用get或者set方法呢？所以这里最好最后remove下
+

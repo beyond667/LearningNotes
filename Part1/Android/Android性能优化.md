@@ -180,7 +180,7 @@ android层面，嵌套布局尽量越少越好，因为嵌套越多，解析起�
 另外就是合理的管理内存，比如不要加载不必要bitmap，另外如果需要service启动后台服务的话，尽量用IntentService，任务执行完会自动结束，避免service内存泄漏；另外的话就是activity内存泄漏，用LeakCanary工具来检查。  
 下面是内存泄漏，内存泄漏的本质的长生命周期的对象持有了短生命周期的对象，导致短生命周期的对象无法被GC回收。在android中有这几种情形会导致：  
 1 单例模式中如果需要Context，尽量用ApplicationContext，而不要持有Activiy，还有些view比如dialog需要持有Activity，那要注意尽量把Activity用弱引用WeakRefrence来持有，因为弱引用持有的对象，GC时是可以被回收的。  
-2 Activity中非静态内部类或者匿名内部类，会持有activity实例，是否泄漏取决于它们的生命周期是否比activity长，如果长的话，就有可能会泄漏，这就是为什么我们平常setOnclickListener(new OnclickListener{})不会泄漏的原因。如果里面确实要做耗时操作，尽量用静态内部类+WeakReference来持有Activity。  
+2 Activity中非静态内部类或者匿名内部类，常见的有Handler，AsyncTask，自定义view，会持有activity实例，是否泄漏取决于它们的生命周期是否比activity长，如果长的话，就有可能会泄漏，这就是为什么我们平常setOnclickListener(new OnclickListener{})不会泄漏的原因。如果里面确实要做耗时操作，尽量用静态内部类+WeakReference来持有Activity，在activity的ondestroy中做注销（removeCallbacksAndMessages）。  
 3 还有就是一些资源没有回收或者反注册，比如eventbus，广播，file，cursor等。
 
 

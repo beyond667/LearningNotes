@@ -1,0 +1,6 @@
+Hanlder主要为了线程间通信，比如一些耗时操作，在异步线程中操作完后，通知主线程进行UI更新,当然也可以在不同线程中通信。Handler原理的话主要理解Handler，Message，messageQueue，Looper这四个之间的关系。  
+在主线程中定义Handler，以及handler的回调方法handleMessage，这种是send方式，也可以用post（Runable）的方式，如果是sendMessage的话，需要在子线程中，调用handler.sendMessge(message)，两种方式最终都是通过handler.enqueueMessage把message传进MessageQueue队列中，  
+MessageQueue就是记录要处理的消息队列，由于Looper.loop方法会轮询查找MessageQueue中是否有新的Message传入，  
+有的话，就通过msg.target.dispatchMessage(msg)回调Handler的dispatchMessage，这里会区分通过post还是sendMessage的，如果是post的，直接调用Runable.run，如果是sendMessage的，会回调我们重写的handleMessage方法
+这里需要注意的是一个线程只能有一个Looper，也只能有一个MessageQueue，因为我们主线程在初始化的时候已经调用过prepareMainLooper，已经帮我们初始化过Looper了，  
+所以我们在主线程不需要调用Looper.prepare和loop方法，但是在子线程中我们也要用handler的话就需要先Looper.prepare,这里主要初始化了Looper(构造方法中初始化了MessageQueue)，并把当前线程和looper绑定
