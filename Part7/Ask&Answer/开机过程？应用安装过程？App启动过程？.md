@@ -1,0 +1,15 @@
+## 开机过程
+我们知道，Android是基于Linux系统的，按下电源键后，会启动Bootload引导程序，开始加载linux内核，然后会启动0号init进程，这个进程会加载init.rc配置文件，配置文件里有个命令会启动zygote进程，前面的进程都属于Linux层的，zygote进程启动后Android层的第一个进程就启动好了。  
+zygote会fork出一个很重要的进程SystemServer，因为AMS,PMS,WMS都是在这里初始化的，zygote进程会启动一个socket服务端，SystemServer进程会启动一个socket客户端，后续AMS会通过systemserver的socket客户端跟zygote通信  
+SystemServer里面要初始化的服务启动完成后会调用systemReady，这里会启动SystemUI和启动Launcher，systemUi启动完代表系统导航栏和状态栏已经初始化完，然后会启动Launcher，通过startHomeActivityLocked把luancher的activity置于栈顶，通过resumeFocusedStackTopActivityLocked将栈顶的Activity显示到界面上，launcher的启动就已经完成了  
+## 应用安装过程
+应用安装有4种方式，系统应用，应用商城，adb安装，第三方应用安装，前三种都没有安装界面，最后有安装界面，由packageinstaller.apk应用处理安装及卸载过程的界面。
+PackageInstallActivity负责解析包，判断apk是否可用，检验签名等，然后向PMS的handler发送一条消息，PMS主要做了以下几件事:  
+把apk文件copy到data/app下面，通过dexopt操作，优化dex文件到data/dalvik-cache文件夹下，在data/data目录下创建当前应用的数据目录，并解析apk信息，更新该应用的权限信息，最终完成安装或者更新后，会发送一条广播Intent.ACTION_PACKAGE_ADDED这样应用就安装完成了
+## App启动流程
+  
+
+
+
+
+
