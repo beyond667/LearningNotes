@@ -1,0 +1,11 @@
+因为android是基于linux系统，linux系统中进程分为用户空间和内核空间，用户空间的数据不能在进程间共享，而内核空间的数据能被共享，并且所有用户空间的进程共享同一个内核空间，这就是进程隔离  
+android通过binder机制来实现ipc进程间通信。四个角色，client，server，servicemananger，binder驱动，前三个都在用户空间，binder驱动在内核空间  
+Server创建binder实体，将这个binder连同name通过binder驱动发送给ServiceManager，以name为key，value为binder，存进SM中，  
+Client就可以以这个name通过binder驱动从sm中拿这个binder的代理对象，我们平常获取的系统服务就是通过这种方式，比如通过context.getSystemService(name)；  
+没有向sm中以name注册binder，这种服务就是匿名binder服务，典型代表就是所以android为我们提供的aidl，aidl帮我们实现了完整的服务代理类，以及binder中所有的parcel的写入和读取操作等，  
+因为app没有权限往sm中注册binder服务，那client怎么获取server的代理对象呢？在bindservice的时候，把binder对象作为参数传递给ams，  
+在传递过程中通过parcel.writeStrongBinder把binder对象保存起来，通过readStrongBinder拿到binder的代理对象，这样client就可以从AMS中拿到binder的代理对象  
+client调用代理对象的具体方法的时候，实际上是通过binder.transact方法，通过binder驱动传递到服务端的ontransact方法，  
+这里会调用实际对象的具体方法，并把返回结果塞进parcel返回给代理对象，代理对象取出parcel中返回的具体数据返回给client，这样就实现了完整的binder流程 
+https://www.jianshu.com/p/daaee38b0cfe  
+https://www.jianshu.com/p/0de4c4017052 aidl实现binder机制，通过ams的过程

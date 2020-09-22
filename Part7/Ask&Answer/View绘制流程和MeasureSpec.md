@@ -1,0 +1,18 @@
+activity启动流程ActivityThread的handleResumeActivity，这里会获取关联的decorView和windowManager，decorView是整个view树的最顶层view,里面有通知栏导航栏状态栏  
+windowmanager实现类的addview方法会实例化viewrootimpl，并调用viewrootimpl.setview,在其requestLayout中会调用scheduleTraversals，doTraversals，performTraversals（view绘制的入口），  
+这方法将近800行，主要走了view的完整绘制流程，分别走了performMeasure,performLayout,performDraw,分别执行了view的measure,layout,draw方法  
+measure是个final方法，子类不能重写，主要用来计算view的measureSpec，里面会执行onMeasure,子类可以重写这个方法来计算自己view的大小。  
+measureSpec是一个32位的int值,高两位代表测量模式，00代表UNSPECIFIED，01代表Exactly，10代表AT_MOST,后面30位代表测量的大小。  
+顶层View的MeasureSpec由ViewRootImpl.getRootMeasureSpec方法获得，子View的MeasureSpec，由父容器measureSpec和其自身的LayoutParams共同决定  
+计算规则：1，如果子view是具体大小，不管父容器的mode，都返回子view的size和Exactly.2 其他情况都返回父容器size和mode,除了子view是wrap_content,父mode是Exactly，这种返回AT_MOST
+measure流程：父容器会调用子view的measure方法，然后调用onMeasure，调用setMeasuredDimension()设置自身大小，如果是viewgroup的话，会先measure子view的大小，再根据子view的大小来确定自己的大小  
+layout流程：measure后将子view放到合适的位置。view的layout会先调用setFrame（l, t, r, b）给自己左上右下赋值，这样就确定自己在父容器中的位置，  
+然后调用onLayout，这是个空方法，viewgroup的onLayout是个抽象方法，所以我们自定义的viewgroup必须重写onLayout,因为layout本身是为了放view的，父类实现这个没有意义  
+通常在onLayout中写一个for循环调用每一个子视图的layout(l, t, r, b)函数，传入不同的参数l, t, r, b来确定每个子视图在父视图中的显示位置。
+draw流程：测量和布局完后，就需要把view绘制到屏幕上，view.draw会先绘制背景，绘制主要内容onDraw,空方法，我们自己实现，来绘制主要的内容，  
+有一点需要注意，如果继承viewgroup，默认是不会执行onDraw的,因为viewgroup本身是个view集合，一般情况下都是透明的，如果要执行ondraw，给它设置非透明的颜色或者setWillNotDraw(false)  
+然后dispatchDraw来绘制子view,view没有实现这个方法，viewgroup实现了，循环调用所有的子view的draw方法。然后绘制前景色和滚动条，最后绘制焦点高亮，这个draw流程就进行完了  
+自定义view一般有以下几种方式：  
+1 组合控件，比如设置项里面，左边文字，右边有个箭头图片，这种可以把多个组件组合起来封装成一个新的组件
+2 自绘控件，继承view，重写onDraw,继承viewgroup，重写onMeasure和onLayout，适用于view需要高度定制
+3 继承控件，比如给textview添加一条自定义的横线，我们希望复用textview的onmeasure和onlayout，就可以继承textview，重写ondraw，通过canvas.drawLine就行
