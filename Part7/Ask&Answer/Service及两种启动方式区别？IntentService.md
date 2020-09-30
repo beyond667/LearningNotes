@@ -4,7 +4,8 @@ bindService是绑定service，调用者销毁时，Service也会自动进行Unbi
 两者生命周期也不一样：  
 start的方式：startService--onCreate--onStartCommand--onDestory;bind方式：bindService--onCreate--onbind--onUnbind--onDestory
 注意的是，这些都是在主线程中进行操作的，如果想在service中做耗时操作，可以通过新建线程或者用IntentService  
-IntentService原理：在其onCreate的时候建了子线程(HanderThread，这里类会新建looper并开始轮询)，初始化了ServiceHander内部类并和子线程的looper绑定  
+IntentService原理：IntentService是service的抽象子类，必须实现onHandlerIntent方法，这个方法是在异步线程调用的，所以可以做耗时操作。  
+实现原理是在其onCreate的时候建了子线程(HanderThread，这里类会新建looper并开始轮询)，初始化了ServiceHander内部类并和子线程的looper绑定  
 也就是说ServiceHander是子线程的handler，在onStartCommand方法中，会通过这个handler往子线程sendMessage,子线程的handlMessage方法会回调我们必须要重写的onHandleIntent方法这个方法执行完，会调用stopself来关闭service    
 由于onHandleIntent这个方法是在子线程中运行，所以我们可以在这里做耗时操作，这就是为什么IntentService的onHandleIntent支持的耗时操作的原因  
 需要注意的是IntentService只能通过startService而不能通过bindService启动，因为源码中我们看到是通过onStartCommand来调用handler.sendMessage的，在onBind方法返回的是null
