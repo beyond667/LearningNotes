@@ -1,0 +1,13 @@
+EventBus是基于观察者模式的“发布订阅事件”的框架，将接收者与发布者分开。
+接收者通过EventBus.getDefault().register(this)和unregister来注册和反注册。
+注册会先通过反射来获取该class的所有Subscribe注解标记的方法，然后通过subscribe方法往subscriptionsByEventType和typesBySubscriber两个hashmap里面存数据，
+subscriptionByEventType里以方法的参数类型（即各种event）为key，封装的Subscription对象（包含了类和方法名）的集合为value，typesBySubscriber是以类的对象为key，该类所有的注册方法的参数类型的集合为value。  
+反注册也就是清空这两个hashmap中关于本类的注册信息。  
+post流程会先把事件放到事件队列，然后从subscriptionByEventType拿到这个所有订阅这个事件的Subscription集合，然后根据设置的线程模式，直接或者间接以该event为参数，最终通过反射执行订阅事件的方法。
+比如我们在Subscribe的注解里定义的threadModel=ThreadModel.Main，代表如果在主线程发送事件，就直接在主线程通过反射处理，如果在子线程发送事件，将通过自定义的handler把事件发送到主线程的消息队列，最终还是通过反射处理。
+#### ThreadMode的几种模型
+- ThreadMode.POSTING。默认，哪个线程pos，哪个线程处理
+- ThreadMode.MAIN。主线程处理。在主线程post的事件，直接反射处理，在子线程发送的，通过handler发送到主线程，再由主线程通过反射处理。
+- ThreadMode.MAIN_ORDERED。也是主线程处理，不同点是就算是主线程post的事件，不直接反射处理，还是要通过Hander进入消息队列，依次处理。
+- ThreadMode.BACKGROUND。如果在主线程发送的，进入消息队列，由线程池处理，如果是子线程的，直接在此子线程处理
+- ThreadMode.ASYNC。无论主线程还是子线程发送的，都由线程池处理。

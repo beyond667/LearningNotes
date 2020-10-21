@@ -1,0 +1,3 @@
+Lru（Least Recently used）最近最少使用算法，目的是当缓存满时，优先淘汰那些近期最少使用的缓存对象。  
+内部维护了个LinkedHashMap，而LinkedHashMap是由数组+双链表来实现的。  
+获取数据的时候把此数据放到队头；插入的时候直接放到队头，添加后调用trimToSize判断缓存是否存满，满的话就用LinkedHashMap的迭代器删除队尾的元素，直到不大于设置的缓存大小为止
