@@ -1,0 +1,16 @@
+Okhttp是目前主流的网络框架，底层基于Socket通信。步骤：先通过builder模式创建OkHttpClient对象和Request对象，通过okhttpClient的newCall方法，获取一个call对象，参数是Request，执行call.execute或者enqueue方法来同步或者异步获取reqponse。
+实际调用的是RealCall实现类的execute或enqueue方法，这里会先调用dispatch.executed,这里注意的是如果请求小于64或者同一个host的请求少于5，会直接执行，否则把请求加入请求队列。  
+不管同步还是异步最终都会执行RealCall.getResponseWithInterceptorChain核心方法，这里使用责任链模式，按照链式把请求依次往下一个拦截器传。
+拦截顺序是，先传到我们自定义的拦截器addInterceptor，后面依次为
+- RetryAndFollowUpInterceptor。主要处理重试和重定向的拦截。
+- BridgeInterceptor。主要用于完善请求头，比如content-type等。
+- CacheInterceptor。根据用户设置的缓存策略来判断是否从缓存中取。如果从缓存拿的话，事件就不会往下传递。
+- ConnectInterceptor。连接服务器，负责和服务器建立连接。这里可以看到是基于Socket来通信的。Http的三次握手也是在这里完成的
+- NetworkInterceptor。观察单个网络请求和相应，因为一次网络请求可能被重定向多次，可以通过这个来查看每次重定向的请求和返回。主要用来统计网络链路上传输的数据。
+- CallServerInterceptor。执行流操作，向服务器发送请求数据，读取服务器的响应数据。
+最终将服务器的数据返回给调用方。
+#### okhttp的缓存策略
+- 第一次拿到响应后根据头信息决定是否缓存
+- 下次请求时判断是否存在本地缓存，是否使用对比缓存
+- 如果缓存失效或者需要对比缓存，就发出网络请求，否则使用本地缓存
+- 如果使用对比缓存，服务器收到请求后自行判断该请求是否还有效，有效的话返回304同时body为空，相当于告诉客户端之前缓存有效，否则返回最新的数据
